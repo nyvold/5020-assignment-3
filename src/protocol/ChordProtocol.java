@@ -125,7 +125,12 @@ public class ChordProtocol implements Protocol{
      */
     public void buildFingerTable() {
         for(Map.Entry<Integer, NodeInterface> entry : this.ring.entrySet()){
-            
+            int hash = entry.getKey();
+            NodeInterface node = entry.getValue();
+            Object ftable = node.getRoutingTable();
+            for(int i = 0; i < this.m; i++){
+                
+            }
         }
     }
 
