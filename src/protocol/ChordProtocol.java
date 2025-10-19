@@ -3,7 +3,7 @@ package protocol;
 
 import crypto.ConsistentHashing;
 import p2p.NetworkInterface;
-
+import p2p.NodeInterface;
 
 import java.util.*;
 
@@ -23,6 +23,8 @@ public class ChordProtocol implements Protocol{
 
     // key indexes. tuples of (<key name>, <key index>)
     public HashMap<String, Integer> keyIndexes;
+
+    TreeMap<Integer, NodeInterface> ring; // overlay network
 
 
     public ChordProtocol(int m){
@@ -83,11 +85,26 @@ public class ChordProtocol implements Protocol{
      *           3)     add neighbor to the peer (uses Peer.addNeighbor() method)
      */
     public void buildOverlayNetwork(){
-
-        /*
-        implement this logic
-         */
-
+        LinkedHashMap<String, NodeInterface> topology = this.network.getTopology();
+        this.ring = new TreeMap<>(); 
+        // a treemap sorts itself based on keys (indexs here), documentation: "The map is sorted according to the natural ordering of its keys"
+        for(Map.Entry<String, NodeInterface> nodeEntry : topology.entrySet()){
+            NodeInterface node = nodeEntry.getValue();
+            int index = this.ch.hash(nodeEntry.getKey());
+            node.setId(index);
+            ring.put(index, node);
+        }
+        // ^^first make ring, put nodes on correct indexes in sorted way^^
+        Integer[] nodeIndexes = ring.keySet().toArray(new Integer[0]);
+        for(int i = 0; i < nodeIndexes.length; i++){
+            int hash = nodeIndexes[i];
+            NodeInterface node = ring.get(hash);
+            int nextIndex = (i + 1) % nodeIndexes.length; // wraparound edgecase
+            int nextHash = nodeIndexes[nextIndex];
+            NodeInterface successor = ring.get(nextHash);
+            node.addNeighbor("successor", successor);
+        }   
+        // ^^connect neighbors, handeling wraparound edgecase^^
     }
 
 
@@ -107,10 +124,9 @@ public class ChordProtocol implements Protocol{
      *     3) node - first node in the ring that is responsible for indexes in the interval
      */
     public void buildFingerTable() {
-        /*
-        implement this logic
-         */
-
+        for(Map.Entry<Integer, NodeInterface> entry : this.ring.entrySet()){
+            
+        }
     }
 
 
