@@ -128,11 +128,11 @@ public class ChordProtocol implements Protocol{
 
         for(Map.Entry<Integer, NodeInterface> entry : this.ring.entrySet()){
             int hash = entry.getKey();
-            NodeInterface node = entry.getValue();
-            NodeInterface[] ftable = new NodeInterface[this.m];
+            NodeInterface currentNode = entry.getValue();
+            NodeInterface[] ftable = new NodeInterface[this.m]; //finger table with m entries
             System.out.println("Node " + hash + " finger table:");
+            // calculate each finger i=1 to m
             for(int i = 1; i <= this.m; i++){
-                System.out.println(" Finger " + (i+1) + " -> Node " + ftable[i].getId());
                 int power = (int) Math.pow(2, i-1);
                 int start = (hash + power) % ringLength;
                 
@@ -142,8 +142,12 @@ public class ChordProtocol implements Protocol{
                 }
                 NodeInterface sNode =  successor.getValue();
                 ftable[i-1] = sNode;
+                
+                // Debug print AFTER assignment with correct indices
+                System.out.println("  Finger " + i + " -> Node " + ftable[i-1].getId());
             }
-            node.setRoutingTable(ftable);
+            System.out.println("Node " + hash + " finger table completed.");
+            currentNode.setRoutingTable(ftable);
         }
     }
 
