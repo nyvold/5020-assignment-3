@@ -24,7 +24,7 @@ public class ChordProtocol implements Protocol{
     // key indexes. tuples of (<key name>, <key index>)
     public HashMap<String, Integer> keyIndexes;
 
-    TreeMap<Integer, NodeInterface> ring; // overlay network
+    public TreeMap<Integer, NodeInterface> ring; // overlay network
 
 
     public ChordProtocol(int m){
@@ -130,7 +130,9 @@ public class ChordProtocol implements Protocol{
             int hash = entry.getKey();
             NodeInterface node = entry.getValue();
             NodeInterface[] ftable = new NodeInterface[this.m];
+            System.out.println("Node " + hash + " finger table:");
             for(int i = 1; i <= this.m; i++){
+                System.out.println(" Finger " + (i+1) + " -> Node " + ftable[i].getId());
                 int power = (int) Math.pow(2, i-1);
                 int start = (hash + power) % ringLength;
                 
