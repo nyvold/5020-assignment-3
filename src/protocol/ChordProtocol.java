@@ -124,13 +124,24 @@ public class ChordProtocol implements Protocol{
      *     3) node - first node in the ring that is responsible for indexes in the interval
      */
     public void buildFingerTable() {
+        int ringLength = (int)Math.pow(2, this.m);
+
         for(Map.Entry<Integer, NodeInterface> entry : this.ring.entrySet()){
             int hash = entry.getKey();
             NodeInterface node = entry.getValue();
-            Object ftable = node.getRoutingTable();
-            for(int i = 0; i < this.m; i++){
+            NodeInterface[] ftable = new NodeInterface[this.m];
+            for(int i = 1; i <= this.m; i++){
+                int power = (int) Math.pow(2, i-1);
+                int start = (hash + power) % ringLength;
                 
+                Map.Entry<Integer, NodeInterface> successor = this.ring.ceilingEntry(start); // .ceilingEntry(start) finds next node given 'start' index, null otherwise
+                if(successor == null){ // wraparound case, return first key found
+                    successor = this.ring.firstEntry();
+                }
+                NodeInterface sNode =  successor.getValue();
+                ftable[i-1] = sNode;
             }
+            node.setRoutingTable(ftable);
         }
     }
 
