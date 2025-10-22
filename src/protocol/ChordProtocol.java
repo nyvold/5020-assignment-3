@@ -162,9 +162,22 @@ public class ChordProtocol implements Protocol{
      * @return names of nodes that have been searched and the final node that contains the key
      */
     public LookUpResponse lookUp(int keyIndex){
-        /*
-        implement this logic
-         */
+        // ArrayList<NodeInterface> visited = new ArrayList<>();
+        // Map.Entry<Integer, NodeInterface> current = this.ring.firstEntry();
+        // visited.add(current.getValue());
+        // while(true) {
+        //     Object data = current.getValue().getData();
+        //     if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
+        //         // Found the key! Create response with visited nodes
+        //         LinkedHashSet<String> peersLookedUp = new LinkedHashSet<>();
+        //         for(NodeInterface node : visited) {
+        //             peersLookedUp.add(node.getName());
+        //         }
+        //         return new LookUpResponse(peersLookedUp, current.getValue().getId(), current.getValue().getName());
+        //     }
+        // }
+
+        
         return null;
     }
 }
