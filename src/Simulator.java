@@ -92,8 +92,22 @@ public class Simulator{
      * @param args - args used by the protocols
      */
     public static void main(String[] args){
-        Simulator simulator = new Simulator();
-        simulator.start(args);
+        try {
+            if (args.length < 2) {
+                System.out.println("Insufficient arguments provided.");
+                System.out.println("Usage: java Simulator <nodeCount> <m>");
+                return;
+            }
+            if (Integer.parseInt(args[0]) <= 0 || Integer.parseInt(args[1]) <= 0) {
+                System.out.println("Arguments must be positive integers.");
+                return;
+            }
+            Simulator simulator = new Simulator();
+            simulator.start(args);
+            
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid argument format. Please provide positive integers for nodeCount and m.");
+        }
     }
 
 }
