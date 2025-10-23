@@ -304,9 +304,9 @@ public class ChordProtocolSimulator {
 
     public void buildProtocol(){
         protocol.setNetwork(network);
-        assignKeys();
+        protocol.buildOverlayNetwork();  // Build ring first
+        assignKeys();                    // Then assign keys to nodes in ring
         protocol.setKeys(keyIndexes);
-        protocol.buildOverlayNetwork();
         protocol.buildFingerTable();
     }
 

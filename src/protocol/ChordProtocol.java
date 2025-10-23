@@ -162,73 +162,86 @@ public class ChordProtocol implements Protocol{
      * @return names of nodes that have been searched and the final node that contains the key
      */
     public LookUpResponse lookUp(int keyIndex){
-        ArrayList<NodeInterface> visited = new ArrayList<>();
-        Map.Entry<Integer, NodeInterface> current = this.ring.firstEntry();
-        visited.add(current.getValue());
+        LinkedHashSet<String> peersLookedUp = new LinkedHashSet<>();
+        NodeInterface currentNode = this.ring.firstEntry().getValue();
         
         while(true) {
-            Object data = current.getValue().getData();
-            if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
-                // Found the key! Create response with visited nodes
-                LinkedHashSet<String> peersLookedUp = new LinkedHashSet<>();
-                for(NodeInterface node : visited) {
-                    peersLookedUp.add(node.getName());
-                }
-                return new LookUpResponse(peersLookedUp, current.getValue().getId(), current.getValue().getName());
+            // Add current node to visited list
+            peersLookedUp.add(currentNode.getName());
+            
+            // Check if current node is responsible for the key
+            // A node is responsible if keyIndex is between current node and its successor
+            NodeInterface successor = currentNode.getSuccessor();
+            int currentId = currentNode.getId();
+            int successorId = successor.getId();
+            
+            boolean responsible;
+            if(currentId < successorId) {
+                // Normal case: currentId < keyIndex <= successorId
+                responsible = (keyIndex > currentId && keyIndex <= successorId);
+            } else {
+                // Wraparound case: keyIndex > currentId OR keyIndex <= successorId
+                responsible = (keyIndex > currentId || keyIndex <= successorId);
             }
             
-            // Key not found at current node, use finger table to find next node
-            NodeInterface[] fingerTable = (NodeInterface[]) current.getValue().getRoutingTable();
-            NodeInterface nextNode = null;
-            int currentId = current.getValue().getId();
-            int ringLength = (int)Math.pow(2, this.m);
-            
-            // Find the best finger whose interval contains the keyIndex
-            for(int i = m - 1; i >= 0; i--) { // Start from furthest finger (best jump)
-                int start = (currentId + (int)Math.pow(2, i)) % ringLength;
-                int end;
-                if(i < m - 1) {
-                    end = (currentId + (int)Math.pow(2, i + 1)) % ringLength;
-                } else {
-                    // For the last finger, interval goes to successor
-                    Map.Entry<Integer, NodeInterface> succEntry = this.ring.higherEntry(currentId);
-                    if(succEntry == null) {
-                        succEntry = this.ring.firstEntry();
+            if(responsible) {
+                // Found responsible range - now find actual node with data
+                // Check all nodes in the network topology to find who actually has the key
+                LinkedHashMap<String, NodeInterface> topology = this.network.getTopology();
+                for(Map.Entry<String, NodeInterface> entry : topology.entrySet()) {
+                    NodeInterface node = entry.getValue();
+                    Object data = node.getData();
+                    if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
+                        // Found the actual node with the data
+                        return new LookUpResponse(peersLookedUp, node.getId(), node.getName());
                     }
-                    end = succEntry.getKey();
                 }
                 
-                // Check if keyIndex is in interval [start, end)
-                boolean inInterval;
-                if(start < end) {
-                    inInterval = (keyIndex >= start && keyIndex < end);
+                // If no node has the data, return the successor as responsible
+                return new LookUpResponse(peersLookedUp, successor.getId(), successor.getName());
+            }
+            
+            // Key not at current node, use finger table to jump closer
+            NodeInterface[] fingerTable = (NodeInterface[]) currentNode.getRoutingTable();
+            NodeInterface nextNode = successor; // Default to successor
+            
+            // Find the closest preceding finger
+            for(int i = m - 1; i >= 0; i--) {
+                NodeInterface finger = fingerTable[i];
+                int fingerId = finger.getId();
+                
+                // Check if this finger is between current and keyIndex
+                boolean between;
+                if(currentId < keyIndex) {
+                    // Normal case: currentId < fingerId < keyIndex
+                    between = (fingerId > currentId && fingerId < keyIndex);
                 } else {
-                    // Wraparound case
-                    inInterval = (keyIndex >= start || keyIndex < end);
+                    // Wraparound case: fingerId > currentId OR fingerId < keyIndex
+                    between = (fingerId > currentId || fingerId < keyIndex);
                 }
                 
-                if(inInterval) {
-                    nextNode = fingerTable[i];
+                if(between) {
+                    nextNode = finger;
                     break;
                 }
             }
             
-            // If no finger interval contains the key, go to immediate successor
-            if(nextNode == null) {
-                Map.Entry<Integer, NodeInterface> succEntry = this.ring.higherEntry(currentId);
-                if(succEntry == null) {
-                    succEntry = this.ring.firstEntry();
+            // Prevent infinite loops
+            if(nextNode.equals(currentNode)) {
+                // Search all nodes for the key as last resort
+                LinkedHashMap<String, NodeInterface> topology = this.network.getTopology();
+                for(Map.Entry<String, NodeInterface> entry : topology.entrySet()) {
+                    NodeInterface node = entry.getValue();
+                    Object data = node.getData();
+                    if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
+                        return new LookUpResponse(peersLookedUp, node.getId(), node.getName());
+                    }
                 }
-                nextNode = succEntry.getValue();
+                return new LookUpResponse(peersLookedUp, currentNode.getId(), currentNode.getName());
             }
             
-            // Move to next node (make nextNode effectively final for lambda)
-            final NodeInterface finalNextNode = nextNode;
-            current = this.ring.entrySet().stream()
-                    .filter(entry -> entry.getValue().equals(finalNextNode))
-                    .findFirst()
-                    .orElse(this.ring.firstEntry());
-            visited.add(current.getValue());
+            // Move to next node
+            currentNode = nextNode;
         }
     }
 }
