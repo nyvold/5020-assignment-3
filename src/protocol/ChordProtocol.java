@@ -162,22 +162,73 @@ public class ChordProtocol implements Protocol{
      * @return names of nodes that have been searched and the final node that contains the key
      */
     public LookUpResponse lookUp(int keyIndex){
-        // ArrayList<NodeInterface> visited = new ArrayList<>();
-        // Map.Entry<Integer, NodeInterface> current = this.ring.firstEntry();
-        // visited.add(current.getValue());
-        // while(true) {
-        //     Object data = current.getValue().getData();
-        //     if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
-        //         // Found the key! Create response with visited nodes
-        //         LinkedHashSet<String> peersLookedUp = new LinkedHashSet<>();
-        //         for(NodeInterface node : visited) {
-        //             peersLookedUp.add(node.getName());
-        //         }
-        //         return new LookUpResponse(peersLookedUp, current.getValue().getId(), current.getValue().getName());
-        //     }
-        // }
-
+        ArrayList<NodeInterface> visited = new ArrayList<>();
+        Map.Entry<Integer, NodeInterface> current = this.ring.firstEntry();
+        visited.add(current.getValue());
         
-        return null;
+        while(true) {
+            Object data = current.getValue().getData();
+            if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
+                // Found the key! Create response with visited nodes
+                LinkedHashSet<String> peersLookedUp = new LinkedHashSet<>();
+                for(NodeInterface node : visited) {
+                    peersLookedUp.add(node.getName());
+                }
+                return new LookUpResponse(peersLookedUp, current.getValue().getId(), current.getValue().getName());
+            }
+            
+            // Key not found at current node, use finger table to find next node
+            NodeInterface[] fingerTable = (NodeInterface[]) current.getValue().getRoutingTable();
+            NodeInterface nextNode = null;
+            int currentId = current.getValue().getId();
+            int ringLength = (int)Math.pow(2, this.m);
+            
+            // Find the best finger whose interval contains the keyIndex
+            for(int i = m - 1; i >= 0; i--) { // Start from furthest finger (best jump)
+                int start = (currentId + (int)Math.pow(2, i)) % ringLength;
+                int end;
+                if(i < m - 1) {
+                    end = (currentId + (int)Math.pow(2, i + 1)) % ringLength;
+                } else {
+                    // For the last finger, interval goes to successor
+                    Map.Entry<Integer, NodeInterface> succEntry = this.ring.higherEntry(currentId);
+                    if(succEntry == null) {
+                        succEntry = this.ring.firstEntry();
+                    }
+                    end = succEntry.getKey();
+                }
+                
+                // Check if keyIndex is in interval [start, end)
+                boolean inInterval;
+                if(start < end) {
+                    inInterval = (keyIndex >= start && keyIndex < end);
+                } else {
+                    // Wraparound case
+                    inInterval = (keyIndex >= start || keyIndex < end);
+                }
+                
+                if(inInterval) {
+                    nextNode = fingerTable[i];
+                    break;
+                }
+            }
+            
+            // If no finger interval contains the key, go to immediate successor
+            if(nextNode == null) {
+                Map.Entry<Integer, NodeInterface> succEntry = this.ring.higherEntry(currentId);
+                if(succEntry == null) {
+                    succEntry = this.ring.firstEntry();
+                }
+                nextNode = succEntry.getValue();
+            }
+            
+            // Move to next node (make nextNode effectively final for lambda)
+            final NodeInterface finalNextNode = nextNode;
+            current = this.ring.entrySet().stream()
+                    .filter(entry -> entry.getValue().equals(finalNextNode))
+                    .findFirst()
+                    .orElse(this.ring.firstEntry());
+            visited.add(current.getValue());
+        }
     }
 }
