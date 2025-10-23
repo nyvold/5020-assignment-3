@@ -130,7 +130,7 @@ public class ChordProtocol implements Protocol{
             int hash = entry.getKey();
             NodeInterface currentNode = entry.getValue();
             NodeInterface[] ftable = new NodeInterface[this.m]; //finger table with m entries
-            System.out.println("Node " + hash + " finger table:");
+            System.out.println(currentNode.getName() + " (at position " + hash + ") finger table:");
             // calculate each finger i=1 to m
             for(int i = 1; i <= this.m; i++){
                 int power = (int) Math.pow(2, i-1);
@@ -143,10 +143,9 @@ public class ChordProtocol implements Protocol{
                 NodeInterface sNode =  successor.getValue();
                 ftable[i-1] = sNode;
                 
-                // Debug print AFTER assignment with correct indices
-                System.out.println("  Finger " + i + " -> Node " + ftable[i-1].getId());
+                System.out.println("  Finger " + i + " -> " + ftable[i-1].getName() + " (at position " + ftable[i-1].getId() + ")");
             }
-            System.out.println("Node " + hash + " finger table completed.");
+            System.out.println(currentNode.getName() + " finger table completed.");
             currentNode.setRoutingTable(ftable);
         }
     }
@@ -163,12 +162,22 @@ public class ChordProtocol implements Protocol{
      * @return names of nodes that have been searched and the final node that contains the key
      */
     public LookUpResponse lookUp(int keyIndex){
-        /*
-        implement this logic
-         */
+        // ArrayList<NodeInterface> visited = new ArrayList<>();
+        // Map.Entry<Integer, NodeInterface> current = this.ring.firstEntry();
+        // visited.add(current.getValue());
+        // while(true) {
+        //     Object data = current.getValue().getData();
+        //     if(data != null && ((LinkedHashSet<Object>) data).contains(keyIndex)) {
+        //         // Found the key! Create response with visited nodes
+        //         LinkedHashSet<String> peersLookedUp = new LinkedHashSet<>();
+        //         for(NodeInterface node : visited) {
+        //             peersLookedUp.add(node.getName());
+        //         }
+        //         return new LookUpResponse(peersLookedUp, current.getValue().getId(), current.getValue().getName());
+        //     }
+        // }
+
+        
         return null;
     }
-
-
-
 }
