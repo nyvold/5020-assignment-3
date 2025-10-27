@@ -18,14 +18,19 @@ public class LookUpResponse {
     }
 
     public String toString(){
+        String line = "----------";
         String result = "";
+        result = result.concat(line);
+        result = result.concat("LOOKUP RESPONSE");
+        result = result.concat(line + "\n");
         result = result.concat("peers : ");
         for(String peer: peers_looked_up){
-            result = result.concat(peer+"\t");
+            result = result.concat(peer+ " ");
         }
-        result=result.concat("\t hop count : "+peers_looked_up.size());
-        result = result.concat("\t node index : "+node_index);
-        result = result.concat("\t node name : "+node_name);
+        result=result.concat(" hop count : "+peers_looked_up.size());
+        result = result.concat(" node index : "+node_index);
+        result = result.concat(" node name : "+node_name);
+        result = result.concat("\n" + line + "END LOOKUP RESPONSE" + "\n");
         return  result;
     }
 }

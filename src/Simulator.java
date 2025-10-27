@@ -52,13 +52,8 @@ public class Simulator{
      *             arg[0] - node count : number of nodes in the network
      *             arg[1] - 'm' value: The length of the indexes generated using consistent hashing
      */
-    public void start(String[] args){
+    public void start(int nodeCount, int m){
 
-        // number of nodes in the network
-        int nodeCount = Integer.parseInt(args[0]);
-
-        // length of the indexes generated using consistent hashing
-        int m = Integer.parseInt(args[1]);
 
 
 //        System.out.println("node count : "+nodeCount+"\t m : "+m);
@@ -92,8 +87,28 @@ public class Simulator{
      * @param args - args used by the protocols
      */
     public static void main(String[] args){
-        Simulator simulator = new Simulator();
-        simulator.start(args);
+        try {
+            if (args.length < 2) {
+                System.out.println("Insufficient arguments provided.");
+                System.out.println("Usage: java Simulator <nodeCount> <m>");
+                return;
+            }
+            if (Integer.parseInt(args[0]) <= 0 || Integer.parseInt(args[1]) <= 0) {
+                System.out.println("Arguments must be positive integers.");
+                return;
+            }
+            // number of nodes in the network
+            int nodeCount = Integer.parseInt(args[0]);
+            
+            // length of the indexes generated using consistent hashing
+            int m = Integer.parseInt(args[1]);
+            
+            Simulator simulator = new Simulator();
+            simulator.start(nodeCount, m);
+            
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid argument format. Please provide positive integers for nodeCount and m.");
+        }
     }
 
 }
