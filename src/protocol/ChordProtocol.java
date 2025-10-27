@@ -188,7 +188,7 @@ public class ChordProtocol implements Protocol{
 
             Interval interval = new OpenClosedInterval(id(current), id(successor));
             if (interval.contains(targetIndex, id(current), id(successor), ringSize)) {
-                visited.add(name(successor));
+                // visited.add(name(successor));
                 return new LookUpResponse(visited, id(successor), name(successor));
             }
 

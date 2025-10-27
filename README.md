@@ -25,7 +25,9 @@ java -cp out Simulator <nodeCount> <m>
 Example:
 
 ```bash
-java -cp out Simulator 16 4
+java -cp out Simulator 10 10
+java -cp out Simulator 100 20
+java -cp out Simulator 1000 20
 ```
 
 If you modify source files, rerun the build command before launching the simulator again to pick up the changes.
