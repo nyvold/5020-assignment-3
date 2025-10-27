@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
+import protocol.NodeType;
+
 /*
 
  */
@@ -21,7 +23,7 @@ public class Node implements NodeInterface{
     // id of the node. example: chord uses node indexes. this can represent node index.
     public int id;
 
-    public HashMap<String, NodeInterface> neighbors;
+    public HashMap<NodeType, NodeInterface> neighbors;
 
     // this routing table can be used to implement different routing tables used in the protocol
     // for example finger table used by chord protocol can be populated in the routing table
@@ -35,7 +37,7 @@ public class Node implements NodeInterface{
         this.id = -1;
         this.name = name;
         this.data = new LinkedHashSet<>();
-        this.neighbors= new HashMap<String, NodeInterface>();
+        this.neighbors= new HashMap<NodeType, NodeInterface>();
     }
 
 
@@ -73,18 +75,18 @@ public class Node implements NodeInterface{
     }
 
 
-    public NodeInterface getNeighbor(String name){
-        return this.neighbors.get(name);
+    public NodeInterface getNeighbor(NodeType type){
+        return this.neighbors.get(type);
     }
 
 
-    public void addNeighbor(String name, NodeInterface node){
-        this.neighbors.put(name, node);
+    public void addNeighbor(NodeType type, NodeInterface node){
+        this.neighbors.put(type, node);
     }
 
 
-    public void removeNeighbor(String name){
-        this.neighbors.remove(name);
+    public void removeNeighbor(NodeType type){
+        this.neighbors.remove(type);
     }
 
 

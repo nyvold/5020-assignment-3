@@ -3,9 +3,14 @@ package protocol;
 
 import crypto.ConsistentHashing;
 import p2p.NetworkInterface;
+import p2p.Node;
 import p2p.NodeInterface;
 
 import java.util.*;
+import protocol.interval.Interval;
+import protocol.interval.OpenClosedInterval;
+import protocol.interval.OpenOpenInterval;
+
 
 /**
  * This class implements the chord protocol. The protocol is tested using the custom built simulator.
@@ -102,7 +107,7 @@ public class ChordProtocol implements Protocol{
             int nextIndex = (i + 1) % nodeIndexes.length; // wraparound edgecase
             int nextHash = nodeIndexes[nextIndex];
             NodeInterface successor = ring.get(nextHash);
-            node.addNeighbor("successor", successor);
+            node.addNeighbor(NodeType.SUCCESSOR, successor);
         }   
         // ^^connect neighbors, handeling wraparound edgecase^^
     }
@@ -166,9 +171,69 @@ public class ChordProtocol implements Protocol{
         /*
         implement this logic
          */
-        return null;
+        int ringSize = 1 << m;
+        int targetIndex = keyIndex % ringSize;
+        
+        // Velg random node i ring
+        NodeInterface current = ring.firstEntry().getValue();
+        
+        // Lagre besøkte noder
+        LinkedHashSet<String> visited = new LinkedHashSet<>();
+
+        int hopLimit = 3 * Math.max(1, m) + ringSize; // random ahh formel
+
+        for (int hops = 0; hops < hopLimit; hops++){
+            visited.add(name(current));
+            NodeInterface successor = successor(current);
+
+            Interval interval = new OpenClosedInterval(id(current), id(successor));
+            if (interval.contains(targetIndex, id(current), id(successor), ringSize)) {
+                // visited.add(name(successor));
+                return new LookUpResponse(visited, id(successor), name(successor));
+            }
+
+            NodeInterface nextHop = closest(current, targetIndex, m);
+            current = (nextHop != null) ? nextHop : successor;
+            
+        }
+
+        return new LookUpResponse(visited, id(current), name(current));
     }
 
+    private String name(NodeInterface n) {
+        try { return n.getName(); } catch (Exception e) { return String.valueOf(id(n)); }
+    }
+
+    private int id(NodeInterface n) {
+        try { return n.getId(); } catch (Exception e) { return -1; }
+    }
+
+    private NodeInterface successor(NodeInterface n) {
+        try {
+            NodeInterface s = n.getNeighbor(NodeType.SUCCESSOR);
+            if (s != null) return s;
+        } catch (Exception ignored) {}
+        Map.Entry<Integer, NodeInterface> e = ring.higherEntry(id(n));
+        return (e != null) ? e.getValue() : ring.firstEntry().getValue();
+    }
+
+    private NodeInterface closest(NodeInterface n, int targetId, int M) {
+        try {
+            NodeInterface[] fingers = (NodeInterface[]) n.getRoutingTable(); // må caste pga doo doo prekode
+            if (fingers == null) return null;
+            int a = id(n);
+            for (int i = fingers.length - 1; i >= 0; i--) {
+                NodeInterface f = fingers[i];
+                if (f == null) continue;
+                int x = id(f);
+                boolean inRange = (a < targetId)
+                        ? (x > a && x < targetId)
+                        : (x > a || x < targetId);
+                if (inRange) return f;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
 
 
 }
