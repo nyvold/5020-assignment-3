@@ -1,6 +1,7 @@
 package p2p;
 
 import java.util.Collection;
+import protocol.NodeType;
 
 public interface NodeInterface {
 
@@ -29,19 +30,19 @@ public interface NodeInterface {
 
     /**
      * Node consists of set of neighbors. It returns the corresponding neighbor given the name of the neighbor.
-     * @param name name of the neighbor
+     * @param type name of the neighbor (SUCCESSOR, PREDECESSOR)
      * @return node object (neighbor node)
      */
-    NodeInterface getNeighbor(String name);
+    NodeInterface getNeighbor(NodeType type);
 
 
 
     /**
      * adds new neighbor to the node.
-     * @param name name of the neighbor
+     * @param type type of the neighbor -> (SUCCESSOR, PREDECESSOR)
      * @param node node object of the neighbor
      */
-    void addNeighbor(String name, NodeInterface node);
+    void addNeighbor(NodeType type, NodeInterface node);
 
 
 

@@ -102,7 +102,7 @@ public class ChordProtocol implements Protocol{
             int nextIndex = (i + 1) % nodeIndexes.length; // wraparound edgecase
             int nextHash = nodeIndexes[nextIndex];
             NodeInterface successor = ring.get(nextHash);
-            node.addNeighbor("successor", successor);
+            node.addNeighbor(NodeType.SUCCESSOR, successor);
         }   
         // ^^connect neighbors, handeling wraparound edgecase^^
     }
