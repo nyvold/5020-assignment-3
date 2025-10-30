@@ -41,3 +41,6 @@ The three core methods in `src/protocol/ChordProtocol.java`:
 - **lookUp()**: Implements closest preceding finger algorithm, routes through finger tables, returns visited nodes and hop count
 
 If you modify source files, rerun the build command before launching the simulator again to pick up the changes.
+
+## workload
+We did the assignment mostly with mob programming and some agile elements like making and assigning issues.
