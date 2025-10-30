@@ -180,18 +180,48 @@ public class ChordProtocol implements Protocol{
         LinkedHashSet<String> visited = new LinkedHashSet<>();
 
         int hopLimit = 3 * Math.max(1, m) + ringSize; // random ahh formel
+        
+        System.out.println("\n=== LOOKUP DEBUG: Key " + keyIndex + " (index " + targetIndex + ") ===");
 
         for (int hops = 0; hops < hopLimit; hops++){
             visited.add(name(current));
+            System.out.println("Hop " + hops + ": At " + name(current) + " (id=" + id(current) + ")");
+            
+            // Check if current node contains the key
+            Object data = current.getData();
+            if (data != null && ((LinkedHashSet<Object>) data).contains(targetIndex)) {
+                System.out.println("  -> FOUND! Current node contains key " + targetIndex);
+                return new LookUpResponse(visited, id(current), name(current));
+            }
+            
             NodeInterface successor = successor(current);
+            System.out.println("  -> Successor: " + name(successor) + " (id=" + id(successor) + ")");
 
+            // Check if key is in the range between current and successor (responsibility check)
             Interval interval = new OpenClosedInterval(id(current), id(successor));
-            if (interval.contains(targetIndex, id(current), id(successor), ringSize)) {
-                // visited.add(name(successor));
+            boolean inRange = interval.contains(targetIndex, id(current), id(successor), ringSize);
+            System.out.println("  -> Is " + targetIndex + " in (" + id(current) + ", " + id(successor) + "]? " + inRange);
+            
+            if (inRange) {
+                // Successor is responsible - visit it and check if it has the key
+                visited.add(name(successor));
+                Object successorData = successor.getData();
+                if (successorData != null && ((LinkedHashSet<Object>) successorData).contains(targetIndex)) {
+                    System.out.println("  -> FOUND! Successor contains key " + targetIndex);
+                    return new LookUpResponse(visited, id(successor), name(successor));
+                }
+                // Successor doesn't have the key but is responsible - return it anyway
+                System.out.println("  -> Successor is responsible (but doesn't have key)");
                 return new LookUpResponse(visited, id(successor), name(successor));
             }
 
+            // Key not in current's range, use finger table to jump closer
             NodeInterface nextHop = closest(current, targetIndex, m);
+            if (nextHop != null) {
+                System.out.println("  -> Closest finger: " + name(nextHop) + " (id=" + id(nextHop) + ")");
+            } else {
+                System.out.println("  -> No closer finger found, using successor");
+            }
             current = (nextHop != null) ? nextHop : successor;
             
         }
