@@ -19,7 +19,7 @@ javac -d out $(find src -name '*.java')
 Using the JAR file:
 
 ```bash
-java -jar out/ChordSimulator.jar <nodeCount> <m>
+java -jar ChordSimulator.jar <nodeCount> <m>
 ```
 
 Or compile and run directly:
@@ -31,9 +31,9 @@ java -cp out Simulator <nodeCount> <m>
 Example:
 
 ```bash
-java -jar out/ChordSimulator.jar 10 10
-java -jar out/ChordSimulator.jar 100 20
-java -jar out/ChordSimulator.jar 1000 20
+java -jar ChordSimulator.jar 10 10
+java -jar ChordSimulator.jar 100 20
+java -jar ChordSimulator.jar 1000 20
 ```
 
 ## Output
