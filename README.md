@@ -30,5 +30,14 @@ java -cp out Simulator 100 20
 java -cp out Simulator 1000 20
 ```
 
+## Output
+Results are written to `output/nodes_<nodeCount>_m_<m>.txt` with lookup routes and average hop count.
+
+## Implementation
+The three core methods in `src/protocol/ChordProtocol.java`:
+
+- **buildOverlayNetwork()**: Uses TreeMap to build sorted ring, calculates node indexes via MD5 hashing, connects successors with wraparound
+- **buildFingerTable()**: Calculates m fingers per node using formula (n+2^(i-1)) mod 2^m, uses TreeMap.ceilingEntry() for successor lookup
+- **lookUp()**: Implements closest preceding finger algorithm, routes through finger tables, returns visited nodes and hop count
+
 If you modify source files, rerun the build command before launching the simulator again to pick up the changes.
-.
