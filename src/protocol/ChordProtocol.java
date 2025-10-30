@@ -173,13 +173,10 @@ public class ChordProtocol implements Protocol{
         int ringSize = 1 << m;
         int targetIndex = keyIndex % ringSize;
         
-        // Velg random node i ring
         NodeInterface current = ring.firstEntry().getValue();
-        
-        // Lagre besøkte noder
         LinkedHashSet<String> visited = new LinkedHashSet<>();
 
-        int hopLimit = 3 * Math.max(1, m) + ringSize; // random ahh formel
+        int hopLimit = 3 * Math.max(1, m) + ringSize; 
         
         System.out.println("\n=== LOOKUP DEBUG: Key " + keyIndex + " (index " + targetIndex + ") ===");
 
@@ -190,14 +187,14 @@ public class ChordProtocol implements Protocol{
             // Check if current node contains the key
             Object data = current.getData();
             if (data != null && ((LinkedHashSet<Object>) data).contains(targetIndex)) {
-                System.out.println("  -> FOUND! Current node contains key " + targetIndex);
+                System.out.println(" Current node contains key " + targetIndex);
                 return new LookUpResponse(visited, id(current), name(current));
             }
             
             NodeInterface successor = successor(current);
             System.out.println("  -> Successor: " + name(successor) + " (id=" + id(successor) + ")");
 
-            // Check if key is in the range between current and successor (responsibility check)
+            // Check if key is in the range between current and successor 
             Interval interval = new OpenClosedInterval(id(current), id(successor));
             boolean inRange = interval.contains(targetIndex, id(current), id(successor), ringSize);
             System.out.println("  -> Is " + targetIndex + " in (" + id(current) + ", " + id(successor) + "]? " + inRange);
@@ -207,7 +204,7 @@ public class ChordProtocol implements Protocol{
                 visited.add(name(successor));
                 Object successorData = successor.getData();
                 if (successorData != null && ((LinkedHashSet<Object>) successorData).contains(targetIndex)) {
-                    System.out.println("  -> FOUND! Successor contains key " + targetIndex);
+                    System.out.println("  -> Successor contains key " + targetIndex);
                     return new LookUpResponse(visited, id(successor), name(successor));
                 }
                 // Successor doesn't have the key but is responsible - return it anyway
@@ -248,7 +245,7 @@ public class ChordProtocol implements Protocol{
 
     private NodeInterface closest(NodeInterface n, int targetId, int M) {
         try {
-            NodeInterface[] fingers = (NodeInterface[]) n.getRoutingTable(); // må caste pga doo doo prekode
+            NodeInterface[] fingers = (NodeInterface[]) n.getRoutingTable();
             if (fingers == null) return null;
             int a = id(n);
             for (int i = fingers.length - 1; i >= 0; i--) {
