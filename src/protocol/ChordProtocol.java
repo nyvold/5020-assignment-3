@@ -135,8 +135,8 @@ public class ChordProtocol implements Protocol{
             int hash = entry.getKey();
             NodeInterface currentNode = entry.getValue();
             NodeInterface[] ftable = new NodeInterface[this.m]; //finger table with m entries
-            System.out.println(currentNode.getName() + " (at position " + hash + ") finger table:");
-            // calculate each finger i=1 to m
+            
+            // Calculate each finger i=1 to m
             for(int i = 1; i <= this.m; i++){
                 int power = (int) Math.pow(2, i-1);
                 int start = (hash + power) % ringLength;
@@ -147,10 +147,7 @@ public class ChordProtocol implements Protocol{
                 }
                 NodeInterface sNode =  successor.getValue();
                 ftable[i-1] = sNode;
-                
-                System.out.println("  Finger " + i + " -> " + ftable[i-1].getName() + " (at position " + ftable[i-1].getId() + ")");
             }
-            System.out.println(currentNode.getName() + " finger table completed.");
             currentNode.setRoutingTable(ftable);
         }
     }
@@ -167,30 +164,41 @@ public class ChordProtocol implements Protocol{
      * @return names of nodes that have been searched and the final node that contains the key
      */
     public LookUpResponse lookUp(int keyIndex){
-        /*
-        implement this logic
-         */
         int ringSize = 1 << m;
         int targetIndex = keyIndex % ringSize;
         
-        // Velg random node i ring
         NodeInterface current = ring.firstEntry().getValue();
-        
-        // Lagre besøkte noder
         LinkedHashSet<String> visited = new LinkedHashSet<>();
 
-        int hopLimit = 3 * Math.max(1, m) + ringSize; // random ahh formel
+        int hopLimit = 3 * Math.max(1, m) + ringSize;
 
         for (int hops = 0; hops < hopLimit; hops++){
             visited.add(name(current));
+            
+            // Check if current node contains the key
+            Object data = current.getData();
+            if (data != null && ((LinkedHashSet<Object>) data).contains(targetIndex)) {
+                return new LookUpResponse(visited, id(current), name(current));
+            }
+            
             NodeInterface successor = successor(current);
 
+            // Check if key is in the range between current and successor 
             Interval interval = new OpenClosedInterval(id(current), id(successor));
-            if (interval.contains(targetIndex, id(current), id(successor), ringSize)) {
-                // visited.add(name(successor));
+            boolean inRange = interval.contains(targetIndex, id(current), id(successor), ringSize);
+            
+            if (inRange) {
+                // Successor is responsible - visit it and check if it has the key
+                visited.add(name(successor));
+                Object successorData = successor.getData();
+                if (successorData != null && ((LinkedHashSet<Object>) successorData).contains(targetIndex)) {
+                    return new LookUpResponse(visited, id(successor), name(successor));
+                }
+                // Successor doesn't have the key but is responsible - return it anyway
                 return new LookUpResponse(visited, id(successor), name(successor));
             }
 
+            // Key not in current's range, use finger table to jump closer
             NodeInterface nextHop = closest(current, targetIndex, m);
             current = (nextHop != null) ? nextHop : successor;
             
@@ -218,7 +226,7 @@ public class ChordProtocol implements Protocol{
 
     private NodeInterface closest(NodeInterface n, int targetId, int M) {
         try {
-            NodeInterface[] fingers = (NodeInterface[]) n.getRoutingTable(); // må caste pga doo doo prekode
+            NodeInterface[] fingers = (NodeInterface[]) n.getRoutingTable();
             if (fingers == null) return null;
             int a = id(n);
             for (int i = fingers.length - 1; i >= 0; i--) {
