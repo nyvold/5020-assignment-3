@@ -16,7 +16,13 @@ javac -d out $(find src -name '*.java')
 ```
 
 ## Run
-Launch the simulator by passing the node count and the `m` value (identifier length) required by Chord:
+Using the JAR file:
+
+```bash
+java -jar out/ChordSimulator.jar <nodeCount> <m>
+```
+
+Or compile and run directly:
 
 ```bash
 java -cp out Simulator <nodeCount> <m>
@@ -25,9 +31,9 @@ java -cp out Simulator <nodeCount> <m>
 Example:
 
 ```bash
-java -cp out Simulator 10 10
-java -cp out Simulator 100 20
-java -cp out Simulator 1000 20
+java -jar out/ChordSimulator.jar 10 10
+java -jar out/ChordSimulator.jar 100 20
+java -jar out/ChordSimulator.jar 1000 20
 ```
 
 ## Output
