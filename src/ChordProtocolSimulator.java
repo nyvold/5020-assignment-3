@@ -1,5 +1,3 @@
-
-
 import p2p.Network;
 import p2p.NetworkInterface;
 import p2p.NodeInterface;
@@ -8,6 +6,11 @@ import protocol.ChordProtocol;
 import protocol.LookUpResponse;
 import protocol.Protocol;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -40,6 +43,17 @@ public class ChordProtocolSimulator {
     // deontes the object of the consistent hashing that is used in hash calculation
     public ConsistentHashing consistentHash;
 
+    private static class LookupRecord {
+        final String keyName;
+        final int keyIndex;
+        final LookUpResponse response;
+
+        LookupRecord(String keyName, int keyIndex, LookUpResponse response) {
+            this.keyName = keyName;
+            this.keyIndex = keyIndex;
+            this.response = response;
+        }
+    }
 
 
     public ChordProtocolSimulator(Protocol protocol, Network network, int m, int nodeCount, int keyCount){
