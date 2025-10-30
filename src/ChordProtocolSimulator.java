@@ -9,6 +9,9 @@ import protocol.LookUpResponse;
 import protocol.Protocol;
 
 import java.util.*;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * This class simulates the chord protocol.
@@ -244,6 +247,77 @@ public class ChordProtocolSimulator {
 
 
     /**
+     * This method tests the functioning of the lookup and writes results to output file.
+     * For each key index it calls the lookup from the chord protocol and returns the node index.
+     * It then writes the results in the required format to the output file.
+     * 
+     * @param outputFileName the name of the output file to write results to
+     */
+    public void testLookUpAndWriteToFile(String outputFileName){
+        List<Integer> hopCounts = new ArrayList<>();
+        
+        try (PrintWriter writer = new PrintWriter(new FileWriter(outputFileName))) {
+            
+            for(Map.Entry<String, Integer> entry: keyIndexes.entrySet())
+            {
+                // lookup the key index
+                LookUpResponse response = protocol.lookUp(entry.getValue());
+
+                if(response == null)
+                {
+                    System.err.println("Lookup failed: null response for " + entry.getKey());
+                    return;
+                }
+
+                // Check whether the returned node index is correct or not
+                if(checkResponse(entry.getValue(), response.node_name)){
+                    // Format: key 1:4 Node 1:4 hop count: 3, route: Node 4 Node 3 Node 1
+                    String keyName = entry.getKey();
+                    int keyIndex = entry.getValue();
+                    String nodeName = response.node_name;
+                    int nodeIndex = response.node_index;
+                    int hopCount = response.peers_looked_up.size();
+                    
+                    // Build route string
+                    StringBuilder route = new StringBuilder();
+                    for(String peer : response.peers_looked_up) {
+                        route.append(peer).append(" ");
+                    }
+                    
+                    // Write formatted output
+                    writer.printf("%s:%d %s:%d hop count: %d, route: %s%n", 
+                                  keyName, keyIndex, nodeName, nodeIndex, hopCount, route.toString().trim());
+                    
+                    // Store hop count for average calculation
+                    hopCounts.add(hopCount);
+                    
+                    System.out.println("lookup successful for " + entry.getKey());
+                }
+                else
+                {
+                    System.out.println("lookup failed for " + entry.getKey());
+                    break;
+                }
+            }
+            
+            // Calculate and write average hop count
+            if (!hopCounts.isEmpty()) {
+                double averageHopCount = hopCounts.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+                writer.printf("%naverage hop count: %.2f%n", averageHopCount);
+                System.out.printf("Average hop count: %.2f%n", averageHopCount);
+            }
+            
+            System.out.println("Results written to: " + outputFileName);
+            
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + outputFileName);
+            e.printStackTrace();
+        }
+    }
+
+
+
+    /**
      * This method tests the functioning of the lookup. This is a simple evaluation. For each key index it calls the
      * lookup from the chord protocol and returns the node index. It then compares the node index with the correct node
      * index (check response) is used for the comparison.
@@ -315,7 +389,7 @@ public class ChordProtocolSimulator {
      * This method starts the simulation.
      *     1) builds the chord protocol
      *     2) generate keys and assign it to nodes
-     *     3) tests the look up operation (only if necessary)
+     *     3) tests the look up operation and writes results to output file
      */
     public void start(){
 
@@ -325,13 +399,11 @@ public class ChordProtocolSimulator {
         printRing();
         printNetwork();
 
-        // tests the lookup operation
-        testLookUp();
-
-        /*
-        implement this logic
-         */
-        // Look up all the key, print out as required in the Assignment Description
+        // Generate output filename based on node count and m value
+        String outputFileName = String.format("output/nodes_%d_m_%d.txt", nodeCount, m);
+        
+        // Perform lookups and write results to file
+        testLookUpAndWriteToFile(outputFileName);
     }
 
 }
