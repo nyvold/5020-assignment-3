@@ -1,5 +1,3 @@
-
-
 import p2p.Network;
 import p2p.NetworkInterface;
 import p2p.NodeInterface;
@@ -8,7 +6,13 @@ import protocol.ChordProtocol;
 import protocol.LookUpResponse;
 import protocol.Protocol;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.Locale;
 
 /**
  * This class simulates the chord protocol.
@@ -37,6 +41,17 @@ public class ChordProtocolSimulator {
     // deontes the object of the consistent hashing that is used in hash calculation
     public ConsistentHashing consistentHash;
 
+    private static class LookupRecord {
+        final String keyName;
+        final int keyIndex;
+        final LookUpResponse response;
+
+        LookupRecord(String keyName, int keyIndex, LookUpResponse response) {
+            this.keyName = keyName;
+            this.keyIndex = keyIndex;
+            this.response = response;
+        }
+    }
 
 
     public ChordProtocolSimulator(Protocol protocol, Network network, int m, int nodeCount, int keyCount){
@@ -244,39 +259,6 @@ public class ChordProtocolSimulator {
 
 
     /**
-     * This method tests the functioning of the lookup. This is a simple evaluation. For each key index it calls the
-     * lookup from the chord protocol and returns the node index. It then compares the node index with the correct node
-     * index (check response) is used for the comparison.
-     */
-    public void testLookUp(){
-
-        for(Map.Entry<String, Integer> entry: keyIndexes.entrySet())
-        {
-
-            // lookup the key index
-            LookUpResponse response = protocol.lookUp(entry.getValue());
-
-            if(response == null)
-            {
-                return;
-            }
-
-            System.out.println(response.toString());
-            // check whether the returned node index is correct or not
-            if(checkResponse(entry.getValue(),response.node_name)){
-                System.out.println("lookup successful for "+entry.getKey());
-            }
-            else
-            {
-                System.out.println("lookup failed for "+entry.getKey());
-                break;
-            }
-        }
-
-    }
-
-
-    /**
      * This method compares whether the node actually stores the given key index or not
      *  It retrieves the data items stored at the particular node and compares whether the key index is stored or not
      * @param keyIndex index of the key
@@ -325,13 +307,79 @@ public class ChordProtocolSimulator {
         printRing();
         printNetwork();
 
-        // tests the lookup operation
-        testLookUp();
+        List<LookupRecord> results = performLookUps(true);
+        writeLookupResults(results);
+    }
 
-        /*
-        implement this logic
-         */
-        // Look up all the key, print out as required in the Assignment Description
+    public void testLookUp(){
+        performLookUps(true);
+    }
+
+    private List<LookupRecord> performLookUps(boolean printToConsole) {
+        List<LookupRecord> records = new ArrayList<>();
+        for(Map.Entry<String, Integer> entry: keyIndexes.entrySet())
+        {
+            String keyName = entry.getKey();
+            int keyIndex = entry.getValue();
+
+            // lookup the key index
+            LookUpResponse response = protocol.lookUp(keyIndex);
+
+            if(response == null)
+            {
+                continue;
+            }
+
+            if (printToConsole) {
+                System.out.println(response.toString());
+                if(checkResponse(keyIndex,response.getNodeName())){
+                    System.out.println("lookup successful for "+keyName);
+                }
+                else
+                {
+                    System.out.println("lookup failed for "+keyName);
+                    break;
+                }
+            }
+
+            records.add(new LookupRecord(keyName, keyIndex, response));
+        }
+        return records;
+    }
+
+    private void writeLookupResults(List<LookupRecord> records) {
+        try {
+            Path outputDir = Paths.get("output");
+            Files.createDirectories(outputDir);
+
+            Path outputFile = outputDir.resolve(String.format("nodes_%d_m_%d.txt", nodeCount, m));
+
+            List<String> lines = new ArrayList<>();
+            int hopTotal = 0;
+
+            for (LookupRecord record : records) {
+                LookUpResponse response = record.response;
+                hopTotal += response.getHopCount();
+                String route = String.join(" ", response.getVisitedPeers());
+                lines.add(String.format(
+                        Locale.US,
+                        "%s:%d %s:%d hop count:%d route:%s",
+                        record.keyName,
+                        record.keyIndex,
+                        response.getNodeName(),
+                        response.getNodeIndex(),
+                        response.getHopCount(),
+                        route
+                ));
+            }
+
+            double average = records.isEmpty() ? 0.0 : (double) hopTotal / records.size();
+            lines.add(String.format(Locale.US, "average hop count = %.2f", average));
+
+            Files.write(outputFile, lines, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("Failed to write lookup results: " + e.getMessage());
+        }
     }
 
 }
